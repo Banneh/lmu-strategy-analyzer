@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LMU Strategy Analyzer v2 · Simulation Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;600;700;800;900&family=Saira:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-grid: #111114;
+    --surface: #141417;
+    --surface-2: #1a1a1f;
+    --border: #2a2a32;
+    --border-bright: #3d3d48;
+    --text: #f0f0f3;
+    --text-dim: #8a8a95;
+    --text-faint: #55555f;
+    --accent: #ff6b00;
+    --accent-soft: rgba(255, 107, 0, 0.12);
+    --green: #4ade80;
+    --green-soft: rgba(74, 222, 128, 0.12);
+    --red: #ef4444;
+    --amber: #fbbf24;
+    --blue: #60a5fa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Saira', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  body {
+    background-image:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 20% 0%, rgba(255,107,0,0.08), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  header {
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h1 {
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 32px;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  h1 .accent { color: var(--accent); }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .panel h2 {
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel h2::before {
+    content: '';
+    width: 3px; height: 14px;
+    background: var(--accent);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .field input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .field small {
+    font-family: 'Saira', sans-serif;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .slider-field {
+    margin-bottom: 14px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .slider-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+  }
+  .slider-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 48px;
+    text-align: right;
+  }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    cursor: pointer;
+  }
+  .toggle input { accent-color: var(--accent); }
+  .toggle label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .run-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 16px;
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.1s;
+  }
+  .run-btn:hover { background: #ff8528; }
+  .run-btn:disabled { background: var(--border); color: var(--text-faint); cursor: not-allowed; }
+
+  .meta-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    line-height: 1.7;
+  }
+
+  .meta-info .hot {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* RESULTS AREA */
+  .results-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    min-height: 400px;
+  }
+
+  .status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-left: 2px solid var(--accent);
+  }
+  .status.running { border-color: var(--amber); color: var(--amber); }
+  .status.done { border-color: var(--green); color: var(--green); }
+  .status.error { border-color: var(--red); color: var(--red); }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .progress-bar::after {
+    content: '';
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    width: var(--p, 0%);
+    transition: width 0.1s linear;
+  }
+
+  .verdict-box {
+    background: var(--bg);
+    border: 2px solid var(--green);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .verdict-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .verdict-head {
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--green);
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  .verdict-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .verdict-detail .k { color: var(--text-dim); }
+  .verdict-detail .v { color: var(--accent); font-weight: 700; }
+
+  table.results {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  table.results th {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+  }
+  table.results th:hover { color: var(--text); }
+  table.results th.sorted-asc::after { content: ' ▲'; color: var(--accent); }
+  table.results th.sorted-desc::after { content: ' ▼'; color: var(--accent); }
+
+  table.results td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  table.results tr:hover td { background: var(--surface-2); cursor: pointer; }
+  table.results tr.best td { background: rgba(74,222,128,0.08); }
+  table.results tr.best td:first-child { border-left: 2px solid var(--green); }
+  table.results tr.selected td { background: rgba(255,107,0,0.10); }
+  table.results tr.selected td:first-child { border-left: 2px solid var(--accent); }
+
+  /* STINT VIZ */
+  .viz-panel {
+    margin-top: 24px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+  .viz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+  }
+  .viz-title {
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+  .viz-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .viz-svg-wrap {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--surface);
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+  .viz-svg {
+    display: block;
+    min-width: 600px;
+  }
+  .viz-stint {
+    cursor: pointer;
+  }
+  .viz-stint:hover rect { filter: brightness(1.3); }
+  .viz-pit:hover rect { filter: brightness(1.4); }
+  .viz-tooltip {
+    position: absolute;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    line-height: 1.6;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  }
+  .viz-tooltip .k { color: var(--text-dim); }
+  .viz-tooltip .v { color: var(--accent); font-weight: 700; }
+  .viz-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    flex-wrap: wrap;
+  }
+  .viz-legend-item { display: flex; align-items: center; gap: 6px; }
+  .viz-swatch { width: 14px; height: 10px; }
+  .viz-swatch.fresh { background: #4ade80; }
+  .viz-swatch.aged { background: #fbbf24; }
+  .viz-swatch.cliff { background: #ef4444; }
+  .viz-swatch.pit { background: repeating-linear-gradient(45deg, #555, #555 3px, #333 3px, #333 6px); }
+  .viz-swatch.tirechg { background: var(--accent); }
+  .viz-swatch.swap { background: var(--blue); }
+
+  .stint-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .stint-table th, .stint-table td {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .stint-table th {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .stint-table td.event {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    background: rgba(255,107,0,0.04);
+  }
+
+  .num-pos { color: var(--green); }
+  .num-neg { color: var(--red); }
+
+  .empty {
+    padding: 80px 20px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.1em;
+  }
+  .empty-art {
+    font-size: 64px;
+    color: var(--border-bright);
+    margin-bottom: 20px;
+    line-height: 1;
+    letter-spacing: -0.05em;
+  }
+  .empty-title {
+    font-family: 'Saira Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .empty-sub {
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.05em;
+    text-transform: none;
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* CHART AREA */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 1400px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  .chart-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+  .chart-title {
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chart-title::before {
+    content: '';
+    width: 3px; height: 14px;
+    background: var(--accent);
+    margin-right: 8px;
+  }
+  .chart-title-text { flex: 1; display: flex; align-items: center; gap: 8px; }
+  .chart-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    text-transform: none;
+    letter-spacing: 0.05em;
+    font-weight: 400;
+  }
+
+  .chart-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    flex-wrap: wrap;
+  }
+  .chart-legend-item { display: flex; align-items: center; gap: 6px; }
+  .chart-legend-swatch {
+    width: 14px; height: 4px;
+    border-radius: 2px;
+  }
+  .chart-legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .scatter-dot {
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .scatter-dot:hover {
+    filter: brightness(1.4);
+  }
+  .scatter-dot.pareto {
+    stroke: var(--text);
+    stroke-width: 1.5;
+  }
+  .scatter-dot.selected {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+
+  .axis-line {
+    stroke: var(--border-bright);
+    stroke-width: 1;
+  }
+  .axis-grid {
+    stroke: var(--border);
+    stroke-width: 0.5;
+    stroke-dasharray: 2,3;
+  }
+  .axis-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    fill: var(--text-faint);
+    letter-spacing: 0.05em;
+  }
+  .axis-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    fill: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  details.collapsible {
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  details.collapsible summary {
+    cursor: pointer;
+    padding: 12px 16px;
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: var(--surface);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  details.collapsible summary::-webkit-details-marker { display: none; }
+  details.collapsible summary::after {
+    content: '+';
+    font-size: 18px;
+    color: var(--text-faint);
+  }
+  details.collapsible[open] summary::after { content: '−'; }
+  details.collapsible summary:hover { color: var(--text); }
+  details.collapsible .body {
+    padding: 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-faint);
+    letter-spacing: 0.15em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>LMU · <span class="accent">Monte Carlo</span> Strategy Engine</h1>
+    <div class="tag">Pass 2 · Full UI · GT3 Endurance (Online)</div>
+  </header>
+
+  <div class="layout">
+
+    <!-- LEFT: INPUTS -->
+    <div class="inputs">
+
+      <div class="panel">
+        <h2>Race</h2>
+        <div class="field">
+          <label>Race Length (hours)</label>
+          <input type="number" id="raceHours" value="6" step="0.5" min="0.5" max="30" />
+          <small>Total race duration. Decimals allowed (e.g. 2.5 for 2h 30min).</small>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Pace Anchors</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label>Push Lap</label>
+            <input type="text" id="pushLap" value="1:52.500" />
+            <small>Fastest sustainable lap time when driving flat-out without fuel saving. Format m:ss.fff or plain seconds.</small>
+          </div>
+          <div class="field">
+            <label>Save Lap</label>
+            <input type="text" id="saveLap" value="1:54.500" />
+            <small>Slowest lap time you'd run at maximum lift-and-coast to save energy. Format m:ss.fff or plain seconds.</small>
+          </div>
+          <div class="field">
+            <label>Push VE/Lap (%)</label>
+            <input type="number" id="pushVE" value="3.50" step="0.01" />
+            <small>Virtual energy consumed per lap at push pace. Read from MFD energy usage during a flat-out stint.</small>
+          </div>
+          <div class="field">
+            <label>Save VE/Lap (%)</label>
+            <input type="number" id="saveVE" value="2.95" step="0.01" />
+            <small>Virtual energy consumed per lap at maximum-save pace. Read from MFD during a LICO stint.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Tank &amp; Pit</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label>Tank (% VE)</label>
+            <input type="number" id="tankCap" value="100" step="1" />
+            <small>Maximum virtual energy per fill. Usually 100 unless event limits stint energy.</small>
+          </div>
+          <div class="field">
+            <label>Pit Fixed (s)</label>
+            <input type="number" id="pitFixed" value="35" step="0.5" />
+            <small>Baseline pit time: pit lane drive + stop + release, without any refuel or tires. Measure from pit-entry line to pit-exit line.</small>
+          </div>
+          <div class="field">
+            <label>Refuel Rate (s/%)</label>
+            <input type="number" id="refuelRate" value="0.30" step="0.01" />
+            <small>Seconds added to the stop for every 1% VE refueled. Time a known refuel amount in practice to calibrate.</small>
+          </div>
+          <div class="field">
+            <label>Tire Change (s)</label>
+            <input type="number" id="tireChange" value="12" step="0.5" />
+            <small>Extra time when changing all four tires. Added on top of pit fixed + refuel.</small>
+          </div>
+          <div class="field">
+            <label>Swap Min Stop (s)</label>
+            <input type="number" id="swapTime" value="12" step="0.5" />
+            <small>Minimum total stop time when swapping drivers. If refuel+tires already take longer, swap is free.</small>
+          </div>
+          <div class="field">
+            <label>Pit σ (s)</label>
+            <input type="number" id="pitNoise" value="0.8" step="0.1" />
+            <small>Random variation in total stop time from crew timing. Typical 0.5–1s.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Tires</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label>Tires Available</label>
+            <input type="number" id="tiresAvail" value="12" step="1" min="4" />
+            <small>Total tires for the race. LMU events typically allocate 10–12 (quali + race combined). Subtract any used in quali. Each tire change uses 4 tires.</small>
+          </div>
+          <div class="field">
+            <label>Deg Rate (s/lap)</label>
+            <input type="number" id="tireDeg" value="0.015" step="0.001" />
+            <small>How much slower each lap becomes as tires age. 0.015 means lap 10 is 0.15s slower than lap 0.</small>
+          </div>
+          <div class="field">
+            <label>Cliff Factor</label>
+            <input type="number" id="tireCliff" value="0.30" step="0.05" />
+            <small>Extra falloff near end of stint. 0.30 means 30% additional degradation at max stint length — the "cliff".</small>
+          </div>
+          <div class="field">
+            <label>Max Stint (laps)</label>
+            <input type="number" id="tireMaxAge" value="30" step="1" />
+            <small>Reference stint length where the cliff is fully applied. Scales when the cliff starts biting.</small>
+          </div>
+          <div class="field">
+            <label>Stint σ (×)</label>
+            <input type="number" id="tireSigma" value="0.15" step="0.01" />
+            <small>Set-to-set variance in degradation. 0.15 = ±15% between tire sets — some go long, some fall off early.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Driver &amp; Incidents</h2>
+        <div class="grid-2">
+          <div class="field">
+            <label>Lap σ (s)</label>
+            <input type="number" id="driverSigma" value="0.40" step="0.05" />
+            <small>How consistent you are lap to lap. 0.3 = very consistent, 0.5 = typical, 0.8+ = inconsistent.</small>
+          </div>
+          <div class="field">
+            <label>Incident Prob/Lap</label>
+            <input type="number" id="incidentP" value="0.002" step="0.0005" />
+            <small>Chance per lap of a mistake (spin, off, minor contact). 0.002 = ~1 incident per 500 laps.</small>
+          </div>
+          <div class="field">
+            <label>Incident Median (s)</label>
+            <input type="number" id="incidentMedian" value="12" step="1" />
+            <small>Typical time lost when an incident happens. Half of incidents cost more, half less.</small>
+          </div>
+          <div class="field">
+            <label>Incident σ (log)</label>
+            <input type="number" id="incidentSigma" value="0.9" step="0.1" />
+            <small>How variable incident costs are. Higher = more extreme worst-cases (big offs, repairs).</small>
+          </div>
+          <div class="field">
+            <label>Push Risk Mult</label>
+            <input type="number" id="pushRiskMult" value="1.3" step="0.1" />
+            <small>Incident probability multiplier at full push. 1.3 = 30% more mistakes when pushing hard.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Traffic</h2>
+        <div class="field">
+          <label>Faster Classes</label>
+          <input type="number" id="fastClasses" value="1" min="0" max="2" step="1" />
+          <small>Number of faster classes sharing the track. 0 = single class, 1 = Hypercar only, 2 = Hypercar + LMP2.</small>
+        </div>
+        <div class="grid-2" id="classInputs">
+          <div class="field">
+            <label>Class 1: Cars</label>
+            <input type="number" id="class1Cars" value="15" step="1" />
+            <small>How many cars in the fastest class (usually Hypercar).</small>
+          </div>
+          <div class="field">
+            <label>Class 1: Δ (s/lap)</label>
+            <input type="number" id="class1Delta" value="25" step="0.5" />
+            <small>How many seconds per lap faster this class is than you. Drives blue flag frequency.</small>
+          </div>
+          <div class="field">
+            <label>Class 2: Cars</label>
+            <input type="number" id="class2Cars" value="0" step="1" />
+            <small>Cars in the second faster class (e.g. LMP2 at Le Mans). 0 if not running.</small>
+          </div>
+          <div class="field">
+            <label>Class 2: Δ (s/lap)</label>
+            <input type="number" id="class2Delta" value="18" step="0.5" />
+            <small>Pace delta to you from the second class.</small>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:10px;">
+          <div class="field">
+            <label>Blue Flag Cost μ</label>
+            <input type="number" id="bfMu" value="0.0" step="0.1" />
+            <small>Log-scale median of time lost per faster-car pass. μ=0 means median cost of 1 second.</small>
+          </div>
+          <div class="field">
+            <label>Blue Flag Cost σ</label>
+            <input type="number" id="bfSigma" value="0.7" step="0.1" />
+            <small>Spread of pass costs. Higher = more variance between clean passes and bad ones.</small>
+          </div>
+          <div class="field">
+            <label>Stuck-Behind Prob/Lap</label>
+            <input type="number" id="stuckP" value="0.02" step="0.005" />
+            <small>Chance per lap of getting stuck behind a same-class car you can't easily pass.</small>
+          </div>
+          <div class="field">
+            <label>Stuck Mean Duration</label>
+            <input type="number" id="stuckDur" value="3" step="0.5" />
+            <small>Average laps it takes to get past once stuck. Real episodes can last longer.</small>
+          </div>
+          <div class="field">
+            <label>Stuck Cost/Lap (s)</label>
+            <input type="number" id="stuckCost" value="1.0" step="0.1" />
+            <small>Time lost per lap while stuck behind someone you can't pass.</small>
+          </div>
+          <div class="field">
+            <label>Early-Race Bunch Factor</label>
+            <input type="number" id="bunchFactor" value="1.5" step="0.1" />
+            <small>Traffic multiplier in first 30% of race when field is bunched. 1.5 = 50% more encounters early.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Driver Swaps</h2>
+        <div class="toggle">
+          <input type="checkbox" id="swapsEnabled" />
+          <label for="swapsEnabled">Enable Driver Swaps</label>
+        </div>
+        <div id="swapInputs" style="display:none;">
+          <div class="field">
+            <label>Number of Drivers</label>
+            <input type="number" id="driverCount" value="2" min="1" max="6" step="1" />
+            <small>Total drivers sharing the car. 2 is typical for 6h, 3+ for 12h/24h.</small>
+          </div>
+          <div class="field">
+            <label>Max Drive Time / Stint (min)</label>
+            <input type="number" id="maxStint" value="80" step="5" />
+            <small>Longest a single driver can go before forced swap. WEC regs use ~80 min.</small>
+          </div>
+          <div class="field">
+            <label>Swap Pace Delta σ (s)</label>
+            <input type="number" id="swapPaceDelta" value="0.2" step="0.05" />
+            <small>How much faster/slower each driver is vs the team average. 0.2s = small variance, 0.8s = one driver much quicker.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Sweep Controls</h2>
+        <div class="grid-3">
+          <div class="field">
+            <label>Pace Points</label>
+            <input type="number" id="pacePts" value="10" min="2" max="200" step="1" />
+            <small>Number of pace levels tested between push and save. More = finer resolution, slower to run.</small>
+          </div>
+          <div class="field">
+            <label>Max Tire Cadence</label>
+            <input type="number" id="cadenceMax" value="2" min="1" max="10" step="1" />
+            <small>Max stints per tire set tested. 2 covers every-stop and every-2nd-stop; 4+ also covers triple/quad-stinting.</small>
+          </div>
+          <div class="field">
+            <label>Sims per Strategy</label>
+            <input type="number" id="nSims" value="1000" min="10" max="100000" step="100" />
+            <small>Simulated races per strategy. 200 for quick exploration, 10,000+ for final decisions.</small>
+          </div>
+        </div>
+        <div class="meta-info" id="sweepMeta">
+          Strategies: <span class="hot" id="metaStrats">20</span><br/>
+          Total sims: <span class="hot" id="metaTotal">20,000</span><br/>
+          Est. time: <span class="hot" id="metaTime">~10s</span>
+        </div>
+        <button class="run-btn" id="runBtn">▶ Run Monte Carlo</button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: RESULTS -->
+    <div class="results-area">
+      <div class="results-panel">
+        <div class="status" id="status">Ready · configure inputs, then run.</div>
+        <div id="verdict"></div>
+        <div id="resultsTable">
+          <div class="empty">
+            <div class="empty-art">▦</div>
+            <div class="empty-title">No Simulation Run Yet</div>
+            <div class="empty-sub">Configure your race parameters in the panel on the left, then hit <strong style="color:var(--accent);">▶ Run Monte Carlo</strong> to see strategy comparisons, Pareto frontier, and stint visualizations.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    LMU Strategy v2 · Pass 2 / 3 · Full UI
+  </footer>
+
+</div>
+
+<script>
+// ==========================================================
+// UTILITIES
+// ==========================================================
+function parseLapTime(str) {
+  if (str == null) return NaN;
+  const s = String(str).trim();
+  if (s === '') return NaN;
+  if (s.includes(':')) {
+    const parts = s.split(':');
+    if (parts.length !== 2) return NaN;
+    const m = parseInt(parts[0], 10);
+    const sec = parseFloat(parts[1]);
+    if (isNaN(m) || isNaN(sec)) return NaN;
+    return m * 60 + sec;
+  }
+  const v = parseFloat(s);
+  return isNaN(v) ? NaN : v;
+}
+
+function gaussian(mean, sigma) {
+  // Box-Muller
+  let u1 = 0, u2 = 0;
+  while (u1 === 0) u1 = Math.random();
+  while (u2 === 0) u2 = Math.random();
+  const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  return mean + sigma * z;
+}
+
+function logNormal(mu, sigma) {
+  return Math.exp(gaussian(mu, sigma));
+}
+
+function poissonSample(lambda) {
+  if (lambda < 30) {
+    // Knuth's algorithm
+    const L = Math.exp(-lambda);
+    let k = 0, p = 1;
+    do { k++; p *= Math.random(); } while (p > L);
+    return k - 1;
+  }
+  // Normal approx for large lambda
+  return Math.max(0, Math.round(gaussian(lambda, Math.sqrt(lambda))));
+}
+
+function geometricSample(mean) {
+  // Geometric with mean `mean` → p = 1/mean
+  const p = 1 / Math.max(1, mean);
+  return Math.max(1, Math.floor(Math.log(1 - Math.random()) / Math.log(1 - p)));
+}
+
+function fmtTime(s) {
+  if (!isFinite(s)) return '—';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = Math.floor(s % 60);
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`;
+  return `${m}m ${String(sec).padStart(2,'0')}s`;
+}
+
+function fmtLap(s) {
+  if (!isFinite(s)) return '—';
+  const m = Math.floor(s / 60);
+  const sec = (s % 60).toFixed(3);
+  return `${m}:${sec.padStart(6,'0')}`;
+}
+
+function percentile(arr, p) {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+// ==========================================================
+// SINGLE-RACE SIMULATION
+// ==========================================================
+/**
+ * Simulate one race given a strategy.
+ * opts.deterministic — if true, all random terms collapse to expected values
+ * opts.trackStints — if true, return per-stint structure for visualization
+ */
+function simulateRace(p, strat, opts) {
+  opts = opts || {};
+  const det = opts.deterministic === true;
+  const track = opts.trackStints === true;
+  const raceSec = p.raceHours * 3600;
+
+  // Pace target → interpolated base lap + VE/lap
+  // t in [0,1], 0 = full push, 1 = max save
+  const t = strat.paceT;
+  const baseLap = p.pushLap + t * (p.saveLap - p.pushLap);
+  const vePerLap = p.pushVE + t * (p.saveVE - p.pushVE);
+
+  // Traffic rate: deterministic blue-flag lapping cycle
+  // Rate per lap = Σ_class (cars × pace_delta / own_lap_time)
+  let bfBaseRate = 0;
+  if (p.fastClasses >= 1 && p.class1Cars > 0) {
+    bfBaseRate += (p.class1Cars * p.class1Delta) / baseLap;
+  }
+  if (p.fastClasses >= 2 && p.class2Cars > 0) {
+    bfBaseRate += (p.class2Cars * p.class2Delta) / baseLap;
+  }
+
+  let time = 0, laps = 0, ve = p.tankCap;
+  let pitStops = 0, pitTime = 0, incidents = 0;
+  let tireAge = 0;
+  let tiresUsed = 4; // starting set on car
+  let stintsSinceTireChange = 0;
+  const tireCadence = strat.tireCadence;
+
+  // stint σ sample (stays constant within a stint, resamples on tire change)
+  let tireStintMult = det ? 1.0 : Math.max(0.4, 1 + gaussian(0, p.tireSigma));
+
+  // stuck-behind state
+  let stuckLapsLeft = 0;
+
+  // driver swap state
+  const swapEnabled = p.swapsEnabled;
+  const maxStintSec = p.maxStint * 60;
+  let currentDriverStintTime = 0;
+  let currentDriverIdx = 0;
+  // per-driver sigma offset: sample once per race for each driver
+  const driverOffsets = [];
+  if (swapEnabled) {
+    for (let i = 0; i < p.driverCount; i++) {
+      driverOffsets.push(det ? 0 : gaussian(0, p.swapPaceDelta));
+    }
+  }
+
+  // Stint tracking
+  const stints = [];
+  const pitsList = [];
+  let currentStint = track ? {
+    stintNum: 1,
+    startTime: 0,
+    startLap: 1,
+    driverIdx: 0,
+    freshTires: true,
+    lapTimes: [],
+  } : null;
+
+  // safety cap
+  let safety = 100000;
+  while (safety-- > 0) {
+    // Race ended?
+    if (time >= raceSec) break;
+
+    // --- PIT DECISION ---
+    let needPit = false;
+    let reason = null;
+
+    // Fuel forced pit
+    if (ve < vePerLap) {
+      needPit = true;
+      reason = 'fuel';
+    }
+
+    // Driver swap forced pit
+    if (swapEnabled && currentDriverStintTime >= maxStintSec) {
+      needPit = true;
+      reason = reason || 'swap';
+    }
+
+    if (needPit) {
+      // Decide fuel amount
+      // Last-stop rule: if projected remaining race time fits within (tankCap / vePerLap) laps,
+      // short-fill to exactly what's needed.
+      const remainingSec = raceSec - time;
+      // Approx laps we'd need (at current pace, no pit): lapsLeftApprox
+      const lapsLeftApprox = Math.ceil(remainingSec / baseLap);
+      const veNeededToFinish = lapsLeftApprox * vePerLap;
+      let refuelAmt;
+      if (veNeededToFinish < p.tankCap) {
+        // Short-fill: fill to exactly what we need + tiny margin
+        const targetVE = Math.min(p.tankCap, veNeededToFinish + vePerLap * 0.5); // small safety
+        refuelAmt = Math.max(0, targetVE - ve);
+      } else {
+        refuelAmt = p.tankCap - ve;
+      }
+
+      // Tire change?
+      stintsSinceTireChange += 1;
+      let changeTires = false;
+      if (stintsSinceTireChange >= tireCadence) {
+        changeTires = true;
+      }
+
+      // Driver swap?
+      let doSwap = false;
+      if (swapEnabled && currentDriverStintTime >= maxStintSec) {
+        doSwap = true;
+      }
+
+      // Compute stop time.
+      // Swap is a MINIMUM stop time, not additive — if refuel+tire+fixed already exceeds
+      // swapTime (12s), swap happens concurrently at no extra cost.
+      const refuelTime = refuelAmt * p.refuelRate;
+      const tireTime = changeTires ? p.tireChange : 0;
+      let baseStop = p.pitFixed + refuelTime + tireTime;
+      if (doSwap) {
+        baseStop = Math.max(baseStop, p.swapTime);
+      }
+      let stopTime = baseStop + (det ? 0 : gaussian(0, p.pitNoise));
+      stopTime = Math.max(5, stopTime);
+
+      // Close current stint
+      if (track && currentStint) {
+        currentStint.endTime = time;
+        currentStint.endLap = laps;
+        currentStint.duration = time - currentStint.startTime;
+        currentStint.numLaps = currentStint.lapTimes.length;
+        currentStint.avgLap = currentStint.lapTimes.length > 0
+          ? currentStint.lapTimes.reduce((a,b)=>a+b,0) / currentStint.lapTimes.length
+          : 0;
+        currentStint.endTireAge = tireAge;
+        stints.push(currentStint);
+      }
+
+      time += stopTime;
+      pitTime += stopTime;
+      pitStops += 1;
+      ve += refuelAmt;
+      ve = Math.min(ve, p.tankCap);
+
+      if (track) {
+        pitsList.push({
+          startTime: time - stopTime,
+          endTime: time,
+          duration: stopTime,
+          refuel: refuelAmt,
+          tireChange: changeTires,
+          swap: doSwap,
+        });
+      }
+
+      if (changeTires) {
+        tireAge = 0;
+        stintsSinceTireChange = 0;
+        tireStintMult = det ? 1.0 : Math.max(0.4, 1 + gaussian(0, p.tireSigma));
+        tiresUsed += 4;
+      }
+
+      if (doSwap) {
+        currentDriverIdx = (currentDriverIdx + 1) % p.driverCount;
+        currentDriverStintTime = 0;
+      }
+
+      // Open new stint
+      if (track) {
+        currentStint = {
+          stintNum: stints.length + 1,
+          startTime: time,
+          startLap: laps + 1,
+          driverIdx: currentDriverIdx,
+          freshTires: changeTires,
+          lapTimes: [],
+        };
+      }
+
+      if (time >= raceSec) break;
+      continue; // re-evaluate loop (could need another pit immediately, unlikely but safe)
+    }
+
+    // --- LAP ---
+    // Compute lap time
+    const ageRatio = tireAge / Math.max(1, p.tireMaxAge);
+    const tireDegTerm = p.tireDeg * tireAge * tireStintMult * (1 + p.tireCliff * ageRatio);
+    const driverOffset = swapEnabled ? driverOffsets[currentDriverIdx] : 0;
+    const driverNoise = det ? 0 : gaussian(0, p.driverSigma);
+
+    // Traffic — blue flag encounters this lap
+    const raceProgress = time / raceSec; // 0..1
+    // Early race: higher variance (bunched field).
+    const bunch = 1 + Math.max(0, (p.bunchFactor - 1) * (1 - Math.min(1, raceProgress / 0.3)));
+    const bfRate = bfBaseRate * bunch;
+    let bfCost = 0;
+    if (det) {
+      // Deterministic: rate × expected cost (mean of LogNormal = exp(μ + σ²/2))
+      bfCost = bfRate * Math.exp(p.bfMu + p.bfSigma * p.bfSigma / 2);
+    } else {
+      const nBF = poissonSample(bfRate);
+      for (let i = 0; i < nBF; i++) {
+        bfCost += logNormal(p.bfMu, p.bfSigma);
+      }
+    }
+
+    // Stuck-behind same-class
+    let stuckCost = 0;
+    if (det) {
+      // Deterministic: steady-state expected stuck cost per lap
+      stuckCost = p.stuckP * p.stuckDur * p.stuckCost;
+    } else if (stuckLapsLeft > 0) {
+      stuckCost = p.stuckCost;
+      stuckLapsLeft -= 1;
+    } else {
+      if (Math.random() < p.stuckP) {
+        stuckLapsLeft = geometricSample(p.stuckDur) - 1;
+        stuckCost = p.stuckCost;
+      }
+    }
+
+    // Incident
+    const pushFactor = 1 - t; // 1 = full push, 0 = max save
+    const incidentProb = p.incidentP * (1 + (p.pushRiskMult - 1) * pushFactor);
+    let incidentCost = 0;
+    if (det) {
+      // Deterministic: expected incident cost spread across all laps
+      const muI = Math.log(p.incidentMedian);
+      incidentCost = incidentProb * Math.exp(muI + p.incidentSigma * p.incidentSigma / 2);
+    } else if (Math.random() < incidentProb) {
+      incidents += 1;
+      const muI = Math.log(p.incidentMedian);
+      incidentCost = logNormal(muI, p.incidentSigma);
+    }
+
+    const lapTime = baseLap + tireDegTerm + driverOffset + driverNoise
+                  + bfCost + stuckCost + incidentCost;
+
+    time += lapTime;
+    ve -= vePerLap;
+    laps += 1;
+    tireAge += 1;
+    if (swapEnabled) currentDriverStintTime += lapTime;
+    if (track && currentStint) currentStint.lapTimes.push(lapTime);
+  }
+
+  // Close trailing stint
+  if (track && currentStint && currentStint.lapTimes.length > 0) {
+    currentStint.endTime = Math.min(time, raceSec);
+    currentStint.endLap = laps;
+    currentStint.duration = currentStint.endTime - currentStint.startTime;
+    currentStint.numLaps = currentStint.lapTimes.length;
+    currentStint.avgLap = currentStint.lapTimes.reduce((a,b)=>a+b,0) / currentStint.lapTimes.length;
+    currentStint.endTireAge = tireAge;
+    stints.push(currentStint);
+  }
+
+  return { laps, pitStops, pitTime, totalTime: time, incidents, tiresUsed, stints, pits: pitsList };
+}
+
+// ==========================================================
+// MONTE CARLO BATCH
+// ==========================================================
+function runStrategy(p, strat, nSims) {
+  const laps = [];
+  const pits = [];
+  const incidents = [];
+  const tires = [];
+  for (let i = 0; i < nSims; i++) {
+    const r = simulateRace(p, strat);
+    laps.push(r.laps);
+    pits.push(r.pitStops);
+    incidents.push(r.incidents);
+    tires.push(r.tiresUsed);
+  }
+  const maxTires = Math.max(...tires);
+  const meanTires = tires.reduce((a,b)=>a+b,0) / tires.length;
+
+  // Run one deterministic pass with stint tracking for visualization
+  const detRun = simulateRace(p, strat, { deterministic: true, trackStints: true });
+
+  return {
+    strat,
+    mean: laps.reduce((a,b)=>a+b,0) / laps.length,
+    p5: percentile(laps, 5),
+    p50: percentile(laps, 50),
+    p95: percentile(laps, 95),
+    meanPits: pits.reduce((a,b)=>a+b,0) / pits.length,
+    meanIncidents: incidents.reduce((a,b)=>a+b,0) / incidents.length,
+    maxTires,
+    meanTires,
+    detRun,
+    laps,
+  };
+}
+
+// ==========================================================
+// INPUTS → PARAMS
+// ==========================================================
+function readParams() {
+  const num = id => parseFloat(document.getElementById(id).value);
+  const int = id => parseInt(document.getElementById(id).value, 10);
+  const lap = id => parseLapTime(document.getElementById(id).value);
+  const p = {
+    raceHours: num('raceHours'),
+    pushLap: lap('pushLap'),
+    saveLap: lap('saveLap'),
+    pushVE: num('pushVE'),
+    saveVE: num('saveVE'),
+    tankCap: num('tankCap'),
+    pitFixed: num('pitFixed'),
+    refuelRate: num('refuelRate'),
+    tireChange: num('tireChange'),
+    swapTime: num('swapTime'),
+    pitNoise: num('pitNoise'),
+    tireDeg: num('tireDeg'),
+    tireCliff: num('tireCliff'),
+    tireMaxAge: num('tireMaxAge'),
+    tireSigma: num('tireSigma'),
+    tiresAvail: int('tiresAvail'),
+    driverSigma: num('driverSigma'),
+    incidentP: num('incidentP'),
+    incidentMedian: num('incidentMedian'),
+    incidentSigma: num('incidentSigma'),
+    pushRiskMult: num('pushRiskMult'),
+    fastClasses: int('fastClasses'),
+    class1Cars: int('class1Cars'),
+    class1Delta: num('class1Delta'),
+    class2Cars: int('class2Cars'),
+    class2Delta: num('class2Delta'),
+    bfMu: num('bfMu'),
+    bfSigma: num('bfSigma'),
+    stuckP: num('stuckP'),
+    stuckDur: num('stuckDur'),
+    stuckCost: num('stuckCost'),
+    bunchFactor: num('bunchFactor'),
+    swapsEnabled: document.getElementById('swapsEnabled').checked,
+    driverCount: int('driverCount'),
+    maxStint: num('maxStint'),
+    swapPaceDelta: num('swapPaceDelta'),
+  };
+  if (isNaN(p.pushLap) || isNaN(p.saveLap)) {
+    throw new Error('Lap times must be valid (m:ss.fff or seconds).');
+  }
+  return p;
+}
+
+function buildStrategies(pacePts, cadenceMax, p) {
+  const strats = [];
+  for (let i = 0; i < pacePts; i++) {
+    const t = pacePts === 1 ? 0 : i / (pacePts - 1); // 0 = push, 1 = save
+    const lapTime = p.pushLap + t * (p.saveLap - p.pushLap);
+    const vePerLap = p.pushVE + t * (p.saveVE - p.pushVE);
+    let label = formatLapTimeShort(lapTime);
+    if (t === 0) label += ' (PUSH)';
+    else if (t === 1) label += ' (SAVE)';
+    for (let c = 1; c <= cadenceMax; c++) {
+      strats.push({
+        id: `p${i}c${c}`,
+        paceT: t,
+        paceLabel: label,
+        lapTime: lapTime,
+        vePerLap: vePerLap,
+        tireCadence: c,
+      });
+    }
+  }
+  return strats;
+}
+
+function formatLapTimeShort(s) {
+  if (!isFinite(s)) return '—';
+  const m = Math.floor(s / 60);
+  const sec = (s % 60);
+  return `${m}:${sec.toFixed(2).padStart(5,'0')}`;
+}
+
+// ==========================================================
+// RENDER
+// ==========================================================
+let lastResults = null;
+let sortKey = 'mean';
+let sortDir = 'desc';
+
+// ==========================================================
+// CHART RENDERERS
+// ==========================================================
+
+// Color palette by tire cadence
+const CADENCE_COLORS = {
+  1: '#ff6b00',  // accent orange
+  2: '#60a5fa',  // blue
+  3: '#4ade80',  // green
+  4: '#fbbf24',  // amber
+  5: '#a78bfa',  // purple
+  6: '#f472b6',  // pink
+  7: '#22d3ee',  // cyan
+  8: '#fb923c',  // light orange
+  9: '#a3e635',  // lime
+  10: '#e879f9', // magenta
+};
+function cadenceColor(c) { return CADENCE_COLORS[c] || '#ffffff'; }
+
+// Compute a "nice" axis range with rounded ticks
+function niceTicks(min, max, targetCount) {
+  if (max === min) { max = min + 1; }
+  const range = max - min;
+  const roughStep = range / Math.max(1, targetCount);
+  const mag = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const norm = roughStep / mag;
+  let step;
+  if (norm < 1.5) step = mag;
+  else if (norm < 3) step = 2 * mag;
+  else if (norm < 7) step = 5 * mag;
+  else step = 10 * mag;
+  const niceMin = Math.floor(min / step) * step;
+  const niceMax = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let v = niceMin; v <= niceMax + step / 2; v += step) {
+    ticks.push(Math.round(v * 1e6) / 1e6); // clean float
+  }
+  return { min: niceMin, max: niceMax, step, ticks };
+}
+
+// Find Pareto frontier (maximize both mean laps AND P5)
+function paretoFrontier(results) {
+  return results.filter(r => {
+    return !results.some(other =>
+      other !== r &&
+      other.mean >= r.mean && other.p5 >= r.p5 &&
+      (other.mean > r.mean || other.p5 > r.p5)
+    );
+  });
+}
+
+let selectedStrategyKey = null;
+let selectedTooltip = null;
+
+function showChartTooltip(e, html) {
+  if (!selectedTooltip) {
+    selectedTooltip = document.createElement('div');
+    selectedTooltip.className = 'viz-tooltip';
+    document.body.appendChild(selectedTooltip);
+  }
+  selectedTooltip.innerHTML = html;
+  selectedTooltip.style.left = (e.pageX + 12) + 'px';
+  selectedTooltip.style.top = (e.pageY + 12) + 'px';
+  selectedTooltip.style.display = 'block';
+}
+function hideChartTooltip() {
+  if (selectedTooltip) selectedTooltip.style.display = 'none';
+}
+
+function renderParetoScatter(results, p) {
+  const W = 540, H = 380;
+  const padL = 60, padR = 20, padT = 20, padB = 50;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  const meanVals = results.map(r => r.mean);
+  const p5Vals = results.map(r => r.p5);
+  const xRange = niceTicks(Math.min(...meanVals) - 0.5, Math.max(...meanVals) + 0.5, 6);
+  const yRange = niceTicks(Math.min(...p5Vals) - 0.5, Math.max(...p5Vals) + 0.5, 6);
+
+  const xScale = v => padL + ((v - xRange.min) / (xRange.max - xRange.min)) * innerW;
+  const yScale = v => padT + innerH - ((v - yRange.min) / (yRange.max - yRange.min)) * innerH;
+
+  const pareto = new Set(paretoFrontier(results));
+
+  // Grid
+  let grid = '';
+  xRange.ticks.forEach(t => {
+    const x = xScale(t);
+    grid += `<line class="axis-grid" x1="${x}" y1="${padT}" x2="${x}" y2="${padT + innerH}"/>`;
+  });
+  yRange.ticks.forEach(t => {
+    const y = yScale(t);
+    grid += `<line class="axis-grid" x1="${padL}" y1="${y}" x2="${padL + innerW}" y2="${y}"/>`;
+  });
+
+  // Axes
+  let axes = `
+    <line class="axis-line" x1="${padL}" y1="${padT + innerH}" x2="${padL + innerW}" y2="${padT + innerH}"/>
+    <line class="axis-line" x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + innerH}"/>
+  `;
+  xRange.ticks.forEach(t => {
+    const x = xScale(t);
+    axes += `<text class="axis-label" x="${x}" y="${padT + innerH + 14}" text-anchor="middle">${t.toFixed(0)}</text>`;
+  });
+  yRange.ticks.forEach(t => {
+    const y = yScale(t);
+    axes += `<text class="axis-label" x="${padL - 8}" y="${y + 3}" text-anchor="end">${t.toFixed(0)}</text>`;
+  });
+  axes += `<text class="axis-title" x="${padL + innerW / 2}" y="${H - 6}" text-anchor="middle">Mean Laps (expected)</text>`;
+  axes += `<text class="axis-title" x="${15}" y="${padT + innerH / 2}" text-anchor="middle" transform="rotate(-90 15 ${padT + innerH / 2})">P5 Laps (downside)</text>`;
+
+  // Diagonal reference line (y = x)
+  const diagX1 = xScale(Math.max(xRange.min, yRange.min));
+  const diagX2 = xScale(Math.min(xRange.max, yRange.max));
+  const diagY1 = yScale(Math.max(xRange.min, yRange.min));
+  const diagY2 = yScale(Math.min(xRange.max, yRange.max));
+  axes += `<line x1="${diagX1}" y1="${diagY1}" x2="${diagX2}" y2="${diagY2}" stroke="var(--text-faint)" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.5"/>`;
+
+  // Dots
+  let dots = '';
+  results.forEach((r, idx) => {
+    const cx = xScale(r.mean);
+    const cy = yScale(r.p5);
+    const isPareto = pareto.has(r);
+    const isSelected = strategyKey(r) === selectedStrategyKey;
+    const radius = isPareto ? 6 : 4;
+    const cls = ['scatter-dot'];
+    if (isPareto) cls.push('pareto');
+    if (isSelected) cls.push('selected');
+    dots += `<circle class="${cls.join(' ')}" data-idx="${idx}" cx="${cx}" cy="${cy}" r="${radius}" fill="${cadenceColor(r.strat.tireCadence)}" opacity="${isPareto ? 1 : 0.65}"/>`;
+  });
+
+  // Cadence legend
+  const cadences = [...new Set(results.map(r => r.strat.tireCadence))].sort();
+  const legendHTML = cadences.map(c => `
+    <div class="chart-legend-item">
+      <div class="chart-legend-dot" style="background:${cadenceColor(c)};"></div>C${c} (every ${c} stop${c>1?'s':''})
+    </div>
+  `).join('') + `
+    <div class="chart-legend-item">
+      <div class="chart-legend-dot" style="background:transparent;border:1.5px solid var(--text);"></div>Pareto frontier
+    </div>
+  `;
+
+  return {
+    svg: `
+      <svg class="chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+        ${grid}
+        ${axes}
+        ${dots}
+      </svg>
+    `,
+    legend: legendHTML,
+  };
+}
+
+function renderPaceCurves(results, p) {
+  const W = 540, H = 380;
+  const padL = 60, padR = 20, padT = 20, padB = 50;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  // Group by cadence
+  const byCadence = {};
+  results.forEach(r => {
+    const c = r.strat.tireCadence;
+    if (!byCadence[c]) byCadence[c] = [];
+    byCadence[c].push(r);
+  });
+  // Sort each group by lap time (slow to fast doesn't matter, sort by paceT for x-axis)
+  Object.values(byCadence).forEach(grp => grp.sort((a, b) => a.strat.lapTime - b.strat.lapTime));
+
+  const allLapTimes = results.map(r => r.strat.lapTime);
+  const allP5 = results.map(r => r.p5);
+  const allP95 = results.map(r => r.p95);
+
+  const xRange = niceTicks(Math.min(...allLapTimes), Math.max(...allLapTimes), 5);
+  const yRange = niceTicks(Math.min(...allP5) - 0.5, Math.max(...allP95) + 0.5, 6);
+
+  const xScale = v => padL + ((v - xRange.min) / (xRange.max - xRange.min)) * innerW;
+  const yScale = v => padT + innerH - ((v - yRange.min) / (yRange.max - yRange.min)) * innerH;
+
+  // Grid
+  let grid = '';
+  xRange.ticks.forEach(t => {
+    const x = xScale(t);
+    grid += `<line class="axis-grid" x1="${x}" y1="${padT}" x2="${x}" y2="${padT + innerH}"/>`;
+  });
+  yRange.ticks.forEach(t => {
+    const y = yScale(t);
+    grid += `<line class="axis-grid" x1="${padL}" y1="${y}" x2="${padL + innerW}" y2="${y}"/>`;
+  });
+
+  // Axes
+  let axes = `
+    <line class="axis-line" x1="${padL}" y1="${padT + innerH}" x2="${padL + innerW}" y2="${padT + innerH}"/>
+    <line class="axis-line" x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + innerH}"/>
+  `;
+  xRange.ticks.forEach(t => {
+    const x = xScale(t);
+    axes += `<text class="axis-label" x="${x}" y="${padT + innerH + 14}" text-anchor="middle">${formatLapTimeShort(t)}</text>`;
+  });
+  yRange.ticks.forEach(t => {
+    const y = yScale(t);
+    axes += `<text class="axis-label" x="${padL - 8}" y="${y + 3}" text-anchor="end">${t.toFixed(0)}</text>`;
+  });
+  axes += `<text class="axis-title" x="${padL + innerW / 2}" y="${H - 6}" text-anchor="middle">Lap Pace (faster ←  → slower)</text>`;
+  axes += `<text class="axis-title" x="${15}" y="${padT + innerH / 2}" text-anchor="middle" transform="rotate(-90 15 ${padT + innerH / 2})">Total Laps</text>`;
+
+  // For each cadence: confidence band + mean line + dots
+  let series = '';
+  Object.keys(byCadence).sort((a, b) => a - b).forEach(c => {
+    const grp = byCadence[c];
+    if (grp.length < 1) return;
+    const color = cadenceColor(parseInt(c, 10));
+
+    if (grp.length >= 2) {
+      // Confidence band: P5 lower, P95 upper
+      const upperPath = grp.map((r, i) => `${i === 0 ? 'M' : 'L'} ${xScale(r.strat.lapTime)} ${yScale(r.p95)}`).join(' ');
+      const lowerPath = grp.slice().reverse().map(r => `L ${xScale(r.strat.lapTime)} ${yScale(r.p5)}`).join(' ');
+      series += `<path d="${upperPath} ${lowerPath} Z" fill="${color}" opacity="0.08" stroke="none"/>`;
+
+      // Mean line
+      const meanPath = grp.map((r, i) => `${i === 0 ? 'M' : 'L'} ${xScale(r.strat.lapTime)} ${yScale(r.mean)}`).join(' ');
+      series += `<path d="${meanPath}" fill="none" stroke="${color}" stroke-width="2" opacity="0.9"/>`;
+    }
+
+    // Dots on each point
+    grp.forEach((r, idx) => {
+      const cx = xScale(r.strat.lapTime);
+      const cy = yScale(r.mean);
+      const isSelected = strategyKey(r) === selectedStrategyKey;
+      const allIdx = results.indexOf(r);
+      series += `<circle class="scatter-dot ${isSelected ? 'selected' : ''}" data-idx="${allIdx}" cx="${cx}" cy="${cy}" r="${isSelected ? 5 : 3.5}" fill="${color}"/>`;
+    });
+  });
+
+  const cadences = Object.keys(byCadence).map(c => parseInt(c, 10)).sort();
+  const legendHTML = cadences.map(c => `
+    <div class="chart-legend-item">
+      <div class="chart-legend-swatch" style="background:${cadenceColor(c)};"></div>C${c} mean (band = P5–P95)
+    </div>
+  `).join('');
+
+  return {
+    svg: `
+      <svg class="chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+        ${grid}
+        ${axes}
+        ${series}
+      </svg>
+    `,
+    legend: legendHTML,
+  };
+}
+
+function renderHistogram(result, p) {
+  const W = 980, H = 220;
+  const padL = 50, padR = 20, padT = 20, padB = 50;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  const laps = result.laps;
+  const minL = Math.min(...laps);
+  const maxL = Math.max(...laps);
+  const nBins = Math.min(40, Math.max(8, Math.floor(Math.sqrt(laps.length))));
+  const binSize = (maxL - minL + 1) / nBins;
+
+  const bins = new Array(nBins).fill(0);
+  laps.forEach(l => {
+    const idx = Math.min(nBins - 1, Math.floor((l - minL) / binSize));
+    bins[idx]++;
+  });
+  const maxCount = Math.max(...bins);
+
+  const xRange = niceTicks(minL - 0.5, maxL + 0.5, 8);
+  const xScale = v => padL + ((v - xRange.min) / (xRange.max - xRange.min)) * innerW;
+  const yScale = v => padT + innerH - (v / maxCount) * innerH;
+
+  // Grid (just X axis)
+  let grid = '';
+  xRange.ticks.forEach(t => {
+    const x = xScale(t);
+    grid += `<line class="axis-grid" x1="${x}" y1="${padT}" x2="${x}" y2="${padT + innerH}"/>`;
+  });
+
+  // Bars
+  let bars = '';
+  bins.forEach((count, i) => {
+    if (count === 0) return;
+    const lo = minL + i * binSize;
+    const hi = lo + binSize;
+    const x = xScale(lo);
+    const w = Math.max(1, xScale(hi) - xScale(lo) - 1);
+    const y = yScale(count);
+    const h = padT + innerH - y;
+    bars += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="var(--accent)" opacity="0.7"/>`;
+  });
+
+  // Markers
+  let markers = '';
+  const meanX = xScale(result.mean);
+  const p5X = xScale(result.p5);
+  const p95X = xScale(result.p95);
+  markers += `<line x1="${p5X}" y1="${padT}" x2="${p5X}" y2="${padT + innerH}" stroke="var(--blue)" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  markers += `<text class="axis-label" x="${p5X}" y="${padT - 4}" text-anchor="middle" fill="var(--blue)">P5: ${result.p5.toFixed(1)}</text>`;
+  markers += `<line x1="${meanX}" y1="${padT}" x2="${meanX}" y2="${padT + innerH}" stroke="var(--green)" stroke-width="2"/>`;
+  markers += `<text class="axis-label" x="${meanX}" y="${padT - 4}" text-anchor="middle" fill="var(--green)">Mean: ${result.mean.toFixed(1)}</text>`;
+  markers += `<line x1="${p95X}" y1="${padT}" x2="${p95X}" y2="${padT + innerH}" stroke="var(--blue)" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  markers += `<text class="axis-label" x="${p95X}" y="${padT - 4}" text-anchor="middle" fill="var(--blue)">P95: ${result.p95.toFixed(1)}</text>`;
+
+  // Axes
+  let axes = `
+    <line class="axis-line" x1="${padL}" y1="${padT + innerH}" x2="${padL + innerW}" y2="${padT + innerH}"/>
+  `;
+  xRange.ticks.forEach(t => {
+    const x = xScale(t);
+    axes += `<text class="axis-label" x="${x}" y="${padT + innerH + 14}" text-anchor="middle">${t.toFixed(0)}</text>`;
+  });
+  axes += `<text class="axis-title" x="${padL + innerW / 2}" y="${H - 6}" text-anchor="middle">Total Laps Completed (${laps.length.toLocaleString()} simulations)</text>`;
+
+  return `
+    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      ${grid}
+      ${bars}
+      ${axes}
+      ${markers}
+    </svg>
+  `;
+}
+
+function strategyKey(r) {
+  return `${r.strat.paceT.toFixed(4)}_${r.strat.tireCadence}`;
+}
+
+function renderStintViz(result, p) {
+  const panel = document.getElementById('vizPanel');
+  if (!panel) return;
+  const det = result.detRun;
+  const stints = det.stints || [];
+  const pits = det.pits || [];
+  const totalTime = det.totalTime;
+  if (stints.length === 0) {
+    panel.innerHTML = '';
+    return;
+  }
+
+  // SVG dimensions
+  const W = 980;
+  const H = 90;
+  const padL = 30, padR = 20, padT = 18, padB = 24;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const xScale = innerW / totalTime;
+
+  // Tire age color: green (fresh) → amber (mid) → red (cliff)
+  function tireColor(stint) {
+    const ratio = (stint.endTireAge || 0) / Math.max(1, p.tireMaxAge);
+    if (ratio < 0.5) return '#4ade80';
+    if (ratio < 0.85) return '#fbbf24';
+    return '#ef4444';
+  }
+
+  // Build SVG elements
+  let stintEls = '';
+  stints.forEach((s, idx) => {
+    const x = padL + s.startTime * xScale;
+    const w = Math.max(2, s.duration * xScale);
+    const fill = tireColor(s);
+    const data = `Stint ${s.stintNum}|${s.numLaps} laps|Avg ${formatLapTimeShort(s.avgLap)}|Tire age end: ${s.endTireAge}|Driver ${s.driverIdx + 1}`;
+    stintEls += `
+      <g class="viz-stint" data-info="${data}">
+        <rect x="${x}" y="${padT}" width="${w}" height="${innerH}" fill="${fill}" opacity="0.85" stroke="#000" stroke-width="0.5"/>
+        ${w > 32 ? `<text x="${x + w/2}" y="${padT + innerH/2 + 4}" text-anchor="middle" fill="#000" font-family="JetBrains Mono" font-size="11" font-weight="700">${s.numLaps}L</text>` : ''}
+      </g>
+    `;
+  });
+
+  let pitEls = '';
+  pits.forEach((pt, idx) => {
+    const x = padL + pt.startTime * xScale;
+    const w = Math.max(2, pt.duration * xScale);
+    const isTireChg = pt.tireChange;
+    const isSwap = pt.swap;
+    const data = `Pit ${idx + 1}|${pt.duration.toFixed(1)}s|Refuel +${pt.refuel.toFixed(1)}%|${isTireChg ? 'Tire change' : 'Fuel only'}${isSwap ? ' + Driver swap' : ''}`;
+    const stripeClass = isTireChg ? 'pit-tirechg' : 'pit-fuel';
+    const baseFill = '#444';
+    pitEls += `
+      <g class="viz-pit" data-info="${data}">
+        <rect x="${x}" y="${padT}" width="${w}" height="${innerH}" fill="${baseFill}"/>
+        ${isTireChg ? `<rect x="${x}" y="${padT}" width="${w}" height="4" fill="var(--accent)"/>` : ''}
+        ${isSwap ? `<rect x="${x}" y="${padT + innerH - 4}" width="${w}" height="4" fill="var(--blue)"/>` : ''}
+      </g>
+    `;
+  });
+
+  // Time axis ticks
+  const tickInterval = totalTime > 7200 ? 3600 : totalTime > 3600 ? 1800 : 600;
+  const ticks = [];
+  for (let t = 0; t <= totalTime; t += tickInterval) {
+    const x = padL + t * xScale;
+    ticks.push(`
+      <line x1="${x}" y1="${padT + innerH}" x2="${x}" y2="${padT + innerH + 4}" stroke="var(--text-faint)" stroke-width="1"/>
+      <text x="${x}" y="${H - 6}" text-anchor="middle" fill="var(--text-dim)" font-family="JetBrains Mono" font-size="10">${formatDurationShort(t)}</text>
+    `);
+  }
+
+  const svg = `
+    <svg class="viz-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <line x1="${padL}" y1="${padT + innerH}" x2="${padL + innerW}" y2="${padT + innerH}" stroke="var(--border)" stroke-width="1"/>
+      ${stintEls}
+      ${pitEls}
+      ${ticks.join('')}
+    </svg>
+  `;
+
+  // Stint table summary
+  const stintRows = [];
+  stints.forEach((s, idx) => {
+    stintRows.push(`
+      <tr>
+        <td>Stint ${s.stintNum}</td>
+        <td>L${s.startLap}–L${s.endLap}</td>
+        <td>${s.numLaps} laps</td>
+        <td>${formatLapTimeShort(s.avgLap)}</td>
+        <td>${s.endTireAge} (${(100 * s.endTireAge / Math.max(1, p.tireMaxAge)).toFixed(0)}% of max)</td>
+        <td>${s.freshTires ? 'Fresh' : 'Used'}</td>
+        <td>${formatDurationShort(s.duration)}</td>
+      </tr>
+    `);
+    if (idx < pits.length) {
+      const pt = pits[idx];
+      const tags = [];
+      tags.push(`Refuel +${pt.refuel.toFixed(1)}%`);
+      if (pt.tireChange) tags.push('Tire change (4)');
+      if (pt.swap) tags.push('Driver swap');
+      stintRows.push(`
+        <tr>
+          <td class="event">PIT ${idx + 1}</td>
+          <td colspan="5" class="event">${tags.join(' · ')}</td>
+          <td class="event">${pt.duration.toFixed(1)}s</td>
+        </tr>
+      `);
+    }
+  });
+
+  panel.innerHTML = `
+    <div class="viz-panel">
+      <div class="viz-header">
+        <div class="viz-title">${result.strat.paceLabel} @ ${result.strat.vePerLap.toFixed(2)}% VE · Cadence ${result.strat.tireCadence}</div>
+        <div class="viz-meta">
+          ${stints.length} stints · ${pits.length} pit stops · ${result.meanTires.toFixed(0)} tires used · ${formatDurationShort(totalTime)} total
+        </div>
+      </div>
+      <div class="viz-svg-wrap">
+        ${svg}
+      </div>
+      <div class="viz-legend">
+        <div class="viz-legend-item"><div class="viz-swatch fresh"></div>Fresh tires</div>
+        <div class="viz-legend-item"><div class="viz-swatch aged"></div>Aged tires</div>
+        <div class="viz-legend-item"><div class="viz-swatch cliff"></div>Past cliff</div>
+        <div class="viz-legend-item"><div class="viz-swatch pit"></div>Pit stop</div>
+        <div class="viz-legend-item"><div class="viz-swatch tirechg"></div>Tire change marker (top)</div>
+        <div class="viz-legend-item"><div class="viz-swatch swap"></div>Driver swap marker (bottom)</div>
+        <div class="viz-legend-item">Hover blocks for details</div>
+      </div>
+      <table class="stint-table">
+        <thead>
+          <tr>
+            <th>Phase</th><th>Laps</th><th>Length</th><th>Avg Lap</th><th>End Tire Age</th><th>Tires</th><th>Duration</th>
+          </tr>
+        </thead>
+        <tbody>${stintRows.join('')}</tbody>
+      </table>
+    </div>
+  `;
+
+  // Hover tooltip wiring
+  let tt = null;
+  document.querySelectorAll('.viz-stint, .viz-pit').forEach(el => {
+    el.addEventListener('mousemove', e => {
+      if (!tt) {
+        tt = document.createElement('div');
+        tt.className = 'viz-tooltip';
+        document.body.appendChild(tt);
+      }
+      const info = el.dataset.info.split('|');
+      tt.innerHTML = info.map((line, i) => i === 0
+        ? `<span class="v">${line}</span>`
+        : line).join('<br/>');
+      tt.style.left = (e.pageX + 12) + 'px';
+      tt.style.top = (e.pageY + 12) + 'px';
+      tt.style.display = 'block';
+    });
+    el.addEventListener('mouseleave', () => {
+      if (tt) tt.style.display = 'none';
+    });
+  });
+}
+
+function formatDurationShort(s) {
+  if (!isFinite(s) || s < 0) return '—';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = Math.floor(s % 60);
+  if (h > 0) return `${h}h${String(m).padStart(2,'0')}m`;
+  if (m > 0) return `${m}m${String(sec).padStart(2,'0')}s`;
+  return `${sec}s`;
+}
+
+function renderResults(results, p) {
+  lastResults = results;
+
+  const sorted = [...results].sort((a, b) => {
+    const av = sortKey === 'pace' ? a.strat.lapTime
+            : sortKey === 'cadence' ? a.strat.tireCadence
+            : sortKey === 'spread' ? (a.p95 - a.p5)
+            : sortKey === 've' ? a.strat.vePerLap
+            : a[sortKey];
+    const bv = sortKey === 'pace' ? b.strat.lapTime
+            : sortKey === 'cadence' ? b.strat.tireCadence
+            : sortKey === 'spread' ? (b.p95 - b.p5)
+            : sortKey === 've' ? b.strat.vePerLap
+            : b[sortKey];
+    return sortDir === 'desc' ? bv - av : av - bv;
+  });
+
+  const best = [...results].sort((a, b) => b.mean - a.mean)[0];
+  const worst = [...results].sort((a, b) => a.mean - b.mean)[0];
+  const robust = [...results].sort((a, b) => b.p5 - a.p5)[0];
+
+  // Initialize selected strategy if not already
+  if (!selectedStrategyKey || !results.some(r => strategyKey(r) === selectedStrategyKey)) {
+    selectedStrategyKey = strategyKey(best);
+  }
+  const selected = results.find(r => strategyKey(r) === selectedStrategyKey) || best;
+
+  // Verdict
+  document.getElementById('verdict').innerHTML = `
+    <div class="verdict-box">
+      <div class="verdict-label">Best Expected Strategy</div>
+      <div class="verdict-head">${best.strat.paceLabel} @ ${best.strat.vePerLap.toFixed(2)}% VE · Tires every ${best.strat.tireCadence} stop${best.strat.tireCadence>1?'s':''}</div>
+      <div class="verdict-detail">
+        <span class="k">Mean Laps:</span> <span class="v">${best.mean.toFixed(2)}</span> &nbsp;
+        <span class="k">P5:</span> <span class="v">${best.p5.toFixed(1)}</span> &nbsp;
+        <span class="k">P95:</span> <span class="v">${best.p95.toFixed(1)}</span><br/>
+        <span class="k">Mean Pit Stops:</span> <span class="v">${best.meanPits.toFixed(1)}</span> &nbsp;
+        <span class="k">Mean Tires Used:</span> <span class="v">${best.meanTires.toFixed(0)}</span> &nbsp;
+        <span class="k">Mean Incidents:</span> <span class="v">${best.meanIncidents.toFixed(2)}</span><br/>
+        <span class="k">Gain vs worst:</span> <span class="v">+${(best.mean - worst.mean).toFixed(2)} laps</span><br/>
+        <span class="k">Most Robust (best P5):</span>
+        <span class="v">${robust.strat.paceLabel} / cadence ${robust.strat.tireCadence}</span>
+        (P5=${robust.p5.toFixed(1)}, Mean=${robust.mean.toFixed(2)})
+      </div>
+    </div>
+  `;
+
+  // Charts
+  const pareto = renderParetoScatter(results, p);
+  const curves = renderPaceCurves(results, p);
+
+  // Table
+  const cols = [
+    { key: 'rank', label: '#' },
+    { key: 'pace', label: 'Lap Pace' },
+    { key: 've', label: 'VE/Lap' },
+    { key: 'cadence', label: 'Cadence' },
+    { key: 'mean', label: 'Mean Laps' },
+    { key: 'p5', label: 'P5' },
+    { key: 'p50', label: 'P50' },
+    { key: 'p95', label: 'P95' },
+    { key: 'spread', label: 'P95-P5' },
+    { key: 'meanPits', label: 'Pits' },
+    { key: 'meanTires', label: 'Tires' },
+    { key: 'meanIncidents', label: 'Inc' },
+  ];
+
+  const rows = sorted.map((r, i) => {
+    const isBest = r === best;
+    const isSelected = strategyKey(r) === selectedStrategyKey;
+    const cls = [];
+    if (isBest) cls.push('best');
+    if (isSelected) cls.push('selected');
+    return `
+      <tr class="${cls.join(' ')}" data-key="${strategyKey(r)}">
+        <td>${i + 1}</td>
+        <td>${r.strat.paceLabel}</td>
+        <td>${r.strat.vePerLap.toFixed(2)}%</td>
+        <td>C${r.strat.tireCadence}</td>
+        <td>${r.mean.toFixed(2)}</td>
+        <td>${r.p5.toFixed(1)}</td>
+        <td>${r.p50.toFixed(1)}</td>
+        <td>${r.p95.toFixed(1)}</td>
+        <td>${(r.p95 - r.p5).toFixed(1)}</td>
+        <td>${r.meanPits.toFixed(1)}</td>
+        <td>${r.meanTires.toFixed(0)}</td>
+        <td>${r.meanIncidents.toFixed(2)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const sortHeaderClass = (key) => {
+    const mapped = key === 'cadence' ? 'cadence' : key === 'pace' ? 'pace' : key;
+    return sortKey === mapped ? 'sorted-' + sortDir : '';
+  };
+
+  document.getElementById('resultsTable').innerHTML = `
+    <div class="charts-grid">
+      <div class="chart-panel">
+        <div class="chart-title">
+          <span class="chart-title-text">Pareto Scatter <span class="chart-subtitle">— each dot is one strategy</span></span>
+        </div>
+        ${pareto.svg}
+        <div class="chart-legend">${pareto.legend}</div>
+      </div>
+      <div class="chart-panel">
+        <div class="chart-title">
+          <span class="chart-title-text">Pace vs Outcome <span class="chart-subtitle">— mean laps with P5–P95 confidence band</span></span>
+        </div>
+        ${curves.svg}
+        <div class="chart-legend">${curves.legend}</div>
+      </div>
+    </div>
+    <div class="chart-panel" style="margin-bottom:24px;">
+      <div class="chart-title">
+        <span class="chart-title-text">All Strategies <span class="chart-subtitle">— click any row to inspect</span></span>
+      </div>
+      <table class="results">
+        <thead>
+          <tr>
+            ${cols.map(c => `<th data-sort="${c.key}" class="${sortHeaderClass(c.key)}">${c.label}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div id="vizPanel"></div>
+    <div id="histPanel"></div>
+  `;
+
+  // Sort handlers
+  document.querySelectorAll('table.results th').forEach(th => {
+    th.addEventListener('click', e => {
+      e.stopPropagation();
+      const key = th.dataset.sort;
+      if (key === 'rank') return;
+      if (sortKey === key) {
+        sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+      } else {
+        sortKey = key;
+        sortDir = 'desc';
+      }
+      renderResults(lastResults, p);
+    });
+  });
+
+  // Row click
+  document.querySelectorAll('table.results tbody tr').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const key = tr.dataset.key;
+      if (key) selectStrategy(key, results, p);
+    });
+  });
+
+  // Scatter dot click
+  document.querySelectorAll('.scatter-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const idx = parseInt(dot.dataset.idx, 10);
+      const r = results[idx];
+      if (r) selectStrategy(strategyKey(r), results, p);
+    });
+    dot.addEventListener('mousemove', e => {
+      const idx = parseInt(dot.dataset.idx, 10);
+      const r = results[idx];
+      if (!r) return;
+      showChartTooltip(e, `
+        <span class="v">${r.strat.paceLabel}</span> @ ${r.strat.vePerLap.toFixed(2)}% VE<br/>
+        <span class="k">Cadence:</span> <span class="v">C${r.strat.tireCadence}</span><br/>
+        <span class="k">Mean Laps:</span> <span class="v">${r.mean.toFixed(2)}</span><br/>
+        <span class="k">P5 / P95:</span> <span class="v">${r.p5.toFixed(1)} / ${r.p95.toFixed(1)}</span><br/>
+        <span class="k">Pits / Tires:</span> <span class="v">${r.meanPits.toFixed(1)} / ${r.meanTires.toFixed(0)}</span>
+      `);
+    });
+    dot.addEventListener('mouseleave', hideChartTooltip);
+  });
+
+  // Render the selected strategy detail
+  renderStintViz(selected, p);
+  renderHistogramPanel(selected, p);
+}
+
+function selectStrategy(key, results, p) {
+  selectedStrategyKey = key;
+  renderResults(results, p);
+  // Scroll selected detail into view if user clicked from a chart
+  const viz = document.getElementById('vizPanel');
+  if (viz) viz.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function renderHistogramPanel(result, p) {
+  const panel = document.getElementById('histPanel');
+  if (!panel) return;
+  panel.innerHTML = `
+    <div class="chart-panel" style="margin-top:24px;">
+      <div class="chart-title">
+        <span class="chart-title-text">Distribution of Total Laps <span class="chart-subtitle">— ${result.strat.paceLabel} @ C${result.strat.tireCadence}</span></span>
+      </div>
+      ${renderHistogram(result, p)}
+    </div>
+  `;
+}
+
+// ==========================================================
+// MAIN RUN
+// ==========================================================
+async function runMonteCarlo() {
+  const btn = document.getElementById('runBtn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+
+  try {
+    const p = readParams();
+
+    // Validate
+    if (!(p.raceHours > 0)) throw new Error('Race length must be positive');
+    if (!(p.pushLap > 0) || !(p.saveLap > 0)) throw new Error('Lap times must be positive');
+    if (p.saveLap < p.pushLap) throw new Error('Save pace must be ≥ push pace');
+    if (p.pushVE < p.saveVE) throw new Error('Push VE must be ≥ save VE');
+    if (!(p.tankCap > 0)) throw new Error('Tank capacity must be positive');
+
+    const pacePts = parseInt(document.getElementById('pacePts').value, 10);
+    const cadenceMax = parseInt(document.getElementById('cadenceMax').value, 10);
+    const nSims = parseInt(document.getElementById('nSims').value, 10);
+
+    const strategies = buildStrategies(pacePts, cadenceMax, p);
+    const totalSims = strategies.length * nSims;
+
+    status.className = 'status running';
+    status.innerHTML = `Running ${strategies.length} strategies × ${nSims} sims = ${totalSims.toLocaleString()} races...<div class="progress-bar" style="--p:0%"></div>`;
+
+    const startT = performance.now();
+    const results = [];
+
+    // Run in batches with async yield so UI updates
+    for (let si = 0; si < strategies.length; si++) {
+      const strat = strategies[si];
+      const r = runStrategy(p, strat, nSims);
+      results.push(r);
+
+      const pct = ((si + 1) / strategies.length) * 100;
+      status.innerHTML = `Running... ${si + 1}/${strategies.length} strategies (${pct.toFixed(0)}%)<div class="progress-bar" style="--p:${pct}%"></div>`;
+
+      // Yield to browser
+      await new Promise(r => setTimeout(r, 0));
+    }
+
+    const elapsed = ((performance.now() - startT) / 1000).toFixed(1);
+
+    // Filter out strategies exceeding tire allocation
+    const feasible = results.filter(r => r.maxTires <= p.tiresAvail);
+    const excluded = results.length - feasible.length;
+
+    if (feasible.length === 0) {
+      status.className = 'status error';
+      status.innerHTML = `✗ No feasible strategies — all ${results.length} candidates exceed tire allocation of ${p.tiresAvail}. Increase tire allocation or test higher cadences (longer between changes).`;
+      document.getElementById('verdict').innerHTML = '';
+      document.getElementById('resultsTable').innerHTML = '<div class="empty">All strategies infeasible.</div>';
+      return;
+    }
+
+    status.className = 'status done';
+    const exclMsg = excluded > 0
+      ? ` · <span style="color:var(--amber);">${excluded} infeasible (tire limit) hidden</span>`
+      : '';
+    status.innerHTML = `✓ Complete · ${feasible.length}/${results.length} feasible strategies · ${totalSims.toLocaleString()} races · ${elapsed}s${exclMsg}`;
+
+    renderResults(feasible, p);
+  } catch (err) {
+    status.className = 'status error';
+    status.innerHTML = `✗ Error: ${err.message}`;
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ==========================================================
+// UI WIRING
+// ==========================================================
+function updateSweepMeta() {
+  const pacePts = parseInt(document.getElementById('pacePts').value, 10) || 0;
+  const cadenceMax = parseInt(document.getElementById('cadenceMax').value, 10) || 0;
+  const nSims = parseInt(document.getElementById('nSims').value, 10) || 0;
+  const nStrats = pacePts * cadenceMax;
+  const totalSims = nStrats * nSims;
+  const estS = Math.max(2, Math.round(totalSims / 2500));
+  document.getElementById('metaStrats').textContent = nStrats.toLocaleString();
+  document.getElementById('metaTotal').textContent = totalSims.toLocaleString();
+  document.getElementById('metaTime').textContent = estS < 60 ? `~${estS}s` : `~${Math.round(estS/60)}m ${estS%60}s`;
+}
+
+document.getElementById('pacePts').addEventListener('input', updateSweepMeta);
+document.getElementById('cadenceMax').addEventListener('input', updateSweepMeta);
+document.getElementById('nSims').addEventListener('input', updateSweepMeta);
+document.getElementById('runBtn').addEventListener('click', runMonteCarlo);
+document.getElementById('swapsEnabled').addEventListener('change', e => {
+  document.getElementById('swapInputs').style.display = e.target.checked ? '' : 'none';
+});
+
+updateSweepMeta();
+</script>
+</body>
+</html>
