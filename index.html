@@ -87,13 +87,97 @@
   }
 
   .layout {
+    display: block;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 14px 24px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.1s, border-color 0.1s;
+    position: relative;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 6px;
+    background: var(--green);
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .tab-spacer { flex: 1; min-width: 16px; }
+
+  .tab-run-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 6px 0;
+  }
+
+  .tab-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    text-align: right;
+    line-height: 1.5;
+  }
+  .tab-meta .hot { color: var(--accent); font-weight: 700; }
+
+  .run-btn.compact {
+    width: auto;
+    margin: 0;
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+
+  .tab-content { display: block; }
+  .tab-content.hidden { display: none; }
+
+  /* INPUTS GRID */
+  .inputs-grid {
     display: grid;
-    grid-template-columns: 420px 1fr;
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
     align-items: start;
   }
-  @media (max-width: 1100px) {
-    .layout { grid-template-columns: 1fr; }
+  .inputs-grid .panel {
+    margin-bottom: 0;
+  }
+  /* Pit + Traffic are dense — let them span more when possible */
+  .inputs-grid .panel.wide {
+    grid-column: span 2;
+  }
+  @media (max-width: 800px) {
+    .inputs-grid .panel.wide { grid-column: auto; }
   }
 
   .panel {
@@ -643,10 +727,22 @@
     <div class="tag">Pass 2 · Full UI · GT3 Endurance (Online)</div>
   </header>
 
-  <div class="layout">
+  <nav class="tabs">
+    <button class="tab active" data-tab="inputs" id="inputsTab">◉ Inputs</button>
+    <button class="tab" data-tab="results" id="resultsTab">◎ Results</button>
+    <div class="tab-spacer"></div>
+    <div class="tab-run-area">
+      <div class="tab-meta">
+        <span class="hot" id="metaStrats">20</span> strategies ·
+        <span class="hot" id="metaTotal">20,000</span> sims ·
+        <span class="hot" id="metaTime">~10s</span>
+      </div>
+      <button class="run-btn compact" id="runBtn">▶ Run Monte Carlo</button>
+    </div>
+  </nav>
 
-    <!-- LEFT: INPUTS -->
-    <div class="inputs">
+  <div class="tab-content" id="tab-inputs">
+    <div class="inputs-grid">
 
       <div class="panel">
         <h2>Race</h2>
@@ -781,7 +877,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel wide">
         <h2>Traffic</h2>
         <div class="field">
           <label>Faster Classes</label>
@@ -888,31 +984,26 @@
             <small>Simulated races per strategy. 200 for quick exploration, 10,000+ for final decisions.</small>
           </div>
         </div>
-        <div class="meta-info" id="sweepMeta">
-          Strategies: <span class="hot" id="metaStrats">20</span><br/>
-          Total sims: <span class="hot" id="metaTotal">20,000</span><br/>
-          Est. time: <span class="hot" id="metaTime">~10s</span>
+        <div class="meta-info">
+          The Run button, live strategy count, and estimated time are in the top bar — visible from any tab.
         </div>
-        <button class="run-btn" id="runBtn">▶ Run Monte Carlo</button>
       </div>
 
     </div>
+  </div>
 
-    <!-- RIGHT: RESULTS -->
-    <div class="results-area">
-      <div class="results-panel">
-        <div class="status" id="status">Ready · configure inputs, then run.</div>
-        <div id="verdict"></div>
-        <div id="resultsTable">
-          <div class="empty">
-            <div class="empty-art">▦</div>
-            <div class="empty-title">No Simulation Run Yet</div>
-            <div class="empty-sub">Configure your race parameters in the panel on the left, then hit <strong style="color:var(--accent);">▶ Run Monte Carlo</strong> to see strategy comparisons, Pareto frontier, and stint visualizations.</div>
-          </div>
+  <div class="tab-content hidden" id="tab-results">
+    <div class="results-panel">
+      <div class="status" id="status">Ready · configure inputs, then run.</div>
+      <div id="verdict"></div>
+      <div id="resultsTable">
+        <div class="empty">
+          <div class="empty-art">▦</div>
+          <div class="empty-title">No Simulation Run Yet</div>
+          <div class="empty-sub">Switch to the <strong style="color:var(--accent);">Inputs</strong> tab to configure your race, then hit <strong style="color:var(--accent);">▶ Run Monte Carlo</strong> in the top bar to see strategy comparisons, Pareto frontier, and stint visualizations.</div>
         </div>
       </div>
     </div>
-
   </div>
 
   <footer>
@@ -2193,9 +2284,26 @@ function updateSweepMeta() {
 document.getElementById('pacePts').addEventListener('input', updateSweepMeta);
 document.getElementById('cadenceMax').addEventListener('input', updateSweepMeta);
 document.getElementById('nSims').addEventListener('input', updateSweepMeta);
-document.getElementById('runBtn').addEventListener('click', runMonteCarlo);
+document.getElementById('runBtn').addEventListener('click', async () => {
+  await runMonteCarlo();
+  // Auto-switch to Results tab after a run finishes (success or error)
+  switchTab('results');
+});
 document.getElementById('swapsEnabled').addEventListener('change', e => {
   document.getElementById('swapInputs').style.display = e.target.checked ? '' : 'none';
+});
+
+// Tab switching
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.toggle('hidden', c.id !== `tab-${name}`);
+  });
+}
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => switchTab(t.dataset.tab));
 });
 
 updateSweepMeta();
